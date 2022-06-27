@@ -55,13 +55,12 @@ public class Gun : MonoBehaviour {
     // 발사 시도
     public void Fire()
     {
-        if (state != State.Ready)return;
-        if (Time.time < lastFireTime + timeBetFire) return;
-        
-        
-        lastFireTime = Time.time;
-        Shot();
-        
+        if (state == State.Ready && Time.time >= lastFireTime + timeBetFire)
+        {
+            lastFireTime = Time.time;
+            Shot();
+        }
+
     }
 
     // 실제 발사 처리
@@ -74,20 +73,24 @@ public class Gun : MonoBehaviour {
         {
             IDamageable target = hit.collider.GetComponent<IDamageable>();
 
-            if (target == null) return;
-            target.OnDamage(damage, hit.point, hit.normal);
+            if (target != null)
+            {
+                target.OnDamage(damage,hit.point,hit.normal);
+                hitPosition = hit.point;
+            }
+            else
+            {
+                hitPosition = fireTransform.position + fireTransform.forward * fireDistance;
+            }
 
-            hitPosition = hit.point;
+            StartCoroutine(ShotEffect(hitPosition));
+
+            magAmmo--;
+            if (magAmmo <= 0)
+            {
+                state = State.Empty;
+            }
         }
-        else
-        {
-            hitPosition = fireTransform.position + fireTransform.forward * fireDistance;
-        }
-
-        StartCoroutine(ShotEffect(hitPosition));
-
-        magAmmo--;
-        if (magAmmo <= 0) state = State.Empty;
     }
 
     // 발사 이펙트와 소리를 재생하고 총알 궤적을 그린다
